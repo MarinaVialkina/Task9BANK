@@ -1,23 +1,59 @@
 package models;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.sql.*;
+import java.util.ArrayList;
+
+import static models.ConnectionData.URL;
+import static models.ConnectionData.USER;
+import static models.ConnectionData.PASSWORD;
 
 public class HoldersDB {
-    private static Map<Integer,AccountHolder> dataBaseHolders = new HashMap<>();
+
+    private static final String INSERT_HOLDERS_SQL = "INSERT INTO HOLDERSDB VALUES ('%s', '%s', '%s', %s, '%s');";
+    private static final String SELECT_HOLDERS_SQL = "select * from HOLDERSDB";
+
 
     public static void addHolder(AccountHolder holder){
-        if (dataBaseHolders.containsKey(holder.getPassportNumberAndSeries())){
+        if (findHolder(holder.getPassportNumberAndSeries())!=null) {
             System.out.println("Клиент с такими данными уже есть в базе");
             return;
         }
-        dataBaseHolders.put(holder.getPassportNumberAndSeries(), holder);
-    }
-    public static AccountHolder findHolder(int passportNumberAndSeries){
-        if (dataBaseHolders.containsKey(passportNumberAndSeries)){
-            return dataBaseHolders.get(passportNumberAndSeries);
+        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            Statement statement = connection.createStatement()) {
+            String insertSql = String.format(INSERT_HOLDERS_SQL, holder.getName(), holder.getSurname(),
+                    holder.getPatronymic(), holder.getPassportNumberAndSeries(), Serializer.serialize(holder.bankAccounts));
+            statement.execute(insertSql);
+        } catch (SQLException | IOException e) {
+            throw new RuntimeException(e);
         }
-        return null;
+
+    }
+
+    public static AccountHolder findHolder(int passportNumberAndSeries){
+        AccountHolder accountHolder = null;
+        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            Statement statement = connection.createStatement()) {
+
+            ResultSet resultSet = statement.executeQuery(SELECT_HOLDERS_SQL);
+            //МОЖНО ПОИГРАТЬСЯ
+            while (resultSet.next()){
+                if (resultSet.getInt("passportNumberAndSeries")==passportNumberAndSeries){
+                    break;
+                }
+            }
+
+            ArrayList<BankAccount> bankAccounts = (ArrayList<BankAccount>) Serializer.deserialize(resultSet.getString("bankAccounts"));
+            accountHolder = new AccountHolder(resultSet.getString("name"),
+                    resultSet.getString("surname"),resultSet.getString("patronymic"),
+                    resultSet.getInt("passportNumberAndSeries"), bankAccounts);
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        finally {
+            return accountHolder;
+        }
     }
 
 

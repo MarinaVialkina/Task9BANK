@@ -3,6 +3,7 @@ package controllers;
 import models.AccountHolder;
 import models.AccountsDB;
 import models.BankAccount;
+import models.HistoryOfOperationsDB;
 
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -17,13 +18,15 @@ public class HolderController {
     public void moneyReceipt(Long amount){
         BankAccount account = selectAccount();
         account.moneyReceipt(amount);
-        account.historyOfOperations.addRecordToHistoryReceipt(amount);
+        HistoryOfOperationsDB.addRecordToHistoryReceipt(account.getAccountNumber(),amount);
+        AccountsDB.balanceUpdate(account);
     }
     public void moneyWithdrawal(Long amount){
         BankAccount account = selectAccount();
         if(account.getBalanceOnAccount()>=amount) {
             account.moneyWithdrawal(amount);
-            account.historyOfOperations.addRecordToHistoryWithdrawal(amount);
+            HistoryOfOperationsDB.addRecordToHistoryWithdrawal(account.getAccountNumber(),amount);
+            AccountsDB.balanceUpdate(account);
         }
         else {
             System.out.println("Недостаточно средств");
@@ -35,15 +38,17 @@ public class HolderController {
         if(accountFirst.getBalanceOnAccount()>=amount){
             accountFirst.moneyWithdrawal(amount);
             accountSecond.moneyReceipt(amount);
-            accountFirst.historyOfOperations.addRecordToHistoryMoneyTransfer(accountSecond, amount);
-            accountSecond.historyOfOperations.addRecordToHistoryReceipt(amount);
+            HistoryOfOperationsDB.addRecordToHistoryMoneyTransfer(accountFirst.getAccountNumber(), accountSecond, amount);
+            HistoryOfOperationsDB.addRecordToHistoryReceipt(accountFirst.getAccountNumber(),amount);
+            AccountsDB.balanceUpdate(accountFirst);
+            AccountsDB.balanceUpdate(accountSecond);
         }
         else {
             System.out.println("Недостаточно средств");
         }
     }
     public void openAccount(){
-        BankAccount bankAccount = new BankAccount();
+        BankAccount bankAccount = new BankAccount((holder.getName()+" "+holder.getSurname()+" "+holder.getPatronymic()));
         (holder.bankAccounts).add(bankAccount);
         AccountsDB.addAccount(bankAccount);
 
@@ -59,8 +64,8 @@ public class HolderController {
         (holder.bankAccounts).remove(account);
     }
     public String getHistoryOfOperations(){
-        BankAccount account = selectAccount();
-        return (account.historyOfOperations.toString());
+        String accountNumber = selectAccount().getAccountNumber();
+        return (HistoryOfOperationsDB.toString(accountNumber));
     }
     public Long getBalanceOnAccount(){
         BankAccount account = selectAccount();

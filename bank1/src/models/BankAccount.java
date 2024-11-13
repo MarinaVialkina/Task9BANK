@@ -1,15 +1,19 @@
 package models;
 
-public class BankAccount {
+import java.io.Serializable;
+
+public class BankAccount implements Serializable {
 
     public String accountNumber;
     private Long balanceOnAccount;
-    public HistoryOfOperations historyOfOperations;
 
-    public BankAccount() {
+
+    private String holder;
+
+    public BankAccount(String holder) {
         this.accountNumber = accountNumberGeneration();
         this.balanceOnAccount = 0L;
-        this.historyOfOperations = new HistoryOfOperations();
+        this.holder = holder;
     }
 
     public String getAccountNumber() {
@@ -19,6 +23,9 @@ public class BankAccount {
     public Long getBalanceOnAccount() {
         return balanceOnAccount;
     }
+    public String getHolder() {
+        return holder;
+    }
 
     public void moneyReceipt(Long amount){
         this.balanceOnAccount+=amount;
@@ -27,6 +34,7 @@ public class BankAccount {
         this.balanceOnAccount-=amount;
     }
     private String accountNumberGeneration(){
+        System.out.println("ГЕНЕРАЦИЯЯЯЯ");
         String accountNumber = "";
         for (int i = 0; i < 20; i++) {
             accountNumber +=(int)(Math.random()*(10));
