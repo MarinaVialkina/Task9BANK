@@ -1,9 +1,10 @@
 package models;
 
-import java.sql.Array;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class AccountHolder {
+public class AccountHolder implements Serializable {
     private final String name;
     private final String surname;
     private final String patronymic;

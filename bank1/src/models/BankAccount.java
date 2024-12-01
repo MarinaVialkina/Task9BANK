@@ -16,6 +16,12 @@ public class BankAccount implements Serializable {
         this.holder = holder;
     }
 
+    public BankAccount(String accountNumber, Long balanceOnAccount, String holder) {
+        this.accountNumber = accountNumber;
+        this.balanceOnAccount = balanceOnAccount;
+        this.holder = holder;
+    }
+
     public String getAccountNumber() {
         return accountNumber;
     }
@@ -34,7 +40,6 @@ public class BankAccount implements Serializable {
         this.balanceOnAccount-=amount;
     }
     private String accountNumberGeneration(){
-        System.out.println("ГЕНЕРАЦИЯЯЯЯ");
         String accountNumber = "";
         for (int i = 0; i < 20; i++) {
             accountNumber +=(int)(Math.random()*(10));

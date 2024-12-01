@@ -2,12 +2,13 @@ package controllers;
 
 import models.AccountHolder;
 import models.HoldersDB;
+import views.MessageWindow;
 
 
 public class MainController {
-    public void create(String name, String surname, String patronymic, int passportNumberAndSeries){
+    public static void create(String name, String surname, String patronymic, int passportNumberAndSeries){
         if(((""+passportNumberAndSeries).length() != 10) || name.isEmpty() || surname.isEmpty()){
-            System.out.println("Неверно введены данные");
+            new MessageWindow("Неверно введены данные");
             return;
         }
         name = (name.substring(0, 1).toUpperCase()+ name.substring(1, name.length()).toLowerCase()).trim();
@@ -16,14 +17,15 @@ public class MainController {
 
         AccountHolder holder = new AccountHolder(name, surname, patronymic, passportNumberAndSeries);
         HoldersDB.addHolder(holder);
+        new MessageWindow("Клиент зарегистрирован ");
 
     }
-    public HolderController findHolder(int passportNumberAndSeries){
+    public static AccountHolder findHolder(int passportNumberAndSeries){
         if (HoldersDB.findHolder(passportNumberAndSeries) == null){
-            System.out.println("Клиента с такими паспортными данными не существует");
+            new MessageWindow("Клиента с такими паспортными данными не существует");
             return null;
         }
-        return new HolderController(HoldersDB.findHolder(passportNumberAndSeries));
+        return HoldersDB.findHolder(passportNumberAndSeries);
 
     }
 

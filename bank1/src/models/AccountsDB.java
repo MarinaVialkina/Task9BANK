@@ -1,7 +1,8 @@
 package models;
 
-import java.io.IOException;
+
 import java.sql.*;
+import java.util.ArrayList;
 
 import static models.ConnectionData.URL;
 import static models.ConnectionData.USER;
@@ -31,13 +32,15 @@ public class AccountsDB {
         }
 
     }
-    public static String findAccount(String accountNumber){
+    public static BankAccount findAccount(String accountNumber){
         try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
         Statement statement = connection.createStatement()) {
             ResultSet resultSet = statement.executeQuery("select * from ACCOUNTSDB");
             while (resultSet.next()){
                 if (resultSet.getString("accountNumber").equals(accountNumber)){
-                    return (resultSet.getString("accountNumber"));
+                    return new BankAccount(accountNumber, (long) resultSet.getInt("balance"),
+                            resultSet.getString("holder"));
+
                 }
             }
             return null;
@@ -55,4 +58,72 @@ public class AccountsDB {
             throw new RuntimeException(e);
         }
     }
+    public static Long getBalance(String accountNumber){
+        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            Statement statement = connection.createStatement()) {
+            ResultSet resultSet = statement.executeQuery("select * from ACCOUNTSDB");
+            while (resultSet.next()){
+                if (resultSet.getString("accountNumber").equals(accountNumber)){
+                    return (long) resultSet.getInt("balance");
+                }
+            }
+            return null;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+
+        }
+    }
+    public static int getBalanceOnAllAccounts(String holder){
+        int balanceOnAllAccounts = 0;
+        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            Statement statement = connection.createStatement()) {
+            ResultSet resultSet = statement.executeQuery("select * from ACCOUNTSDB");
+            while (resultSet.next()){
+                if( resultSet.getString("holder").equals(holder))
+                    balanceOnAllAccounts+=resultSet.getInt("balance");
+
+            }
+            return balanceOnAllAccounts;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+
+        }
+    }
+    public static String[] getListOfAccountsNumbers(String holder){
+        String accountsNumbers = "";
+        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            Statement statement = connection.createStatement()) {
+            ResultSet resultSet = statement.executeQuery("select * from ACCOUNTSDB");
+            while (resultSet.next()){
+                if( resultSet.getString("holder").equals(holder))
+                    accountsNumbers+=(resultSet.getString("accountNumber")+".");
+
+
+            }
+            return accountsNumbers.split("[.]");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+
+        }
+    }
+    public static ArrayList<BankAccount> getListOfAccounts(String holder){
+        ArrayList<BankAccount> bankAccounts = new ArrayList<>();
+        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            Statement statement = connection.createStatement()) {
+            ResultSet resultSet = statement.executeQuery("select * from ACCOUNTSDB");
+            while (resultSet.next()){
+                if( resultSet.getString("holder").equals(holder))
+                    bankAccounts.add(new BankAccount(resultSet.getString("accountNumber"),
+                            (long) resultSet.getInt("balance"),resultSet.getString("holder")));
+
+
+
+            }
+            return bankAccounts;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+
+        }
+    }
+
 }

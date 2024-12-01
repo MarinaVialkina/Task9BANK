@@ -4,37 +4,38 @@ import models.AccountHolder;
 import models.AccountsDB;
 import models.BankAccount;
 import models.HistoryOfOperationsDB;
+import views.MessageWindow;
 
 import java.util.ArrayList;
-import java.util.Scanner;
 
 public class HolderController {
-    private AccountHolder holder;
 
     public HolderController(AccountHolder holder) {
-        this.holder = holder;
     }
 
-    public void moneyReceipt(Long amount){
-        BankAccount account = selectAccount();
+    public static void moneyReceipt(Long amount,  String accountNumber){
+        BankAccount account = AccountsDB.findAccount(accountNumber);
+
         account.moneyReceipt(amount);
         HistoryOfOperationsDB.addRecordToHistoryReceipt(account.getAccountNumber(),amount);
         AccountsDB.balanceUpdate(account);
     }
-    public void moneyWithdrawal(Long amount){
-        BankAccount account = selectAccount();
+    public static void moneyWithdrawal(Long amount, String accountNumber){
+        BankAccount account = AccountsDB.findAccount(accountNumber);
+
         if(account.getBalanceOnAccount()>=amount) {
             account.moneyWithdrawal(amount);
             HistoryOfOperationsDB.addRecordToHistoryWithdrawal(account.getAccountNumber(),amount);
             AccountsDB.balanceUpdate(account);
         }
         else {
-            System.out.println("Недостаточно средств");
+            new MessageWindow("Недостаточно средств на счёте");
         }
     }
-    public void transferMoneyBetweenAccounts( Long amount){
-        BankAccount accountFirst = selectAccount();
-        BankAccount accountSecond = selectAccount();
+    public static void transferMoneyBetweenAccounts( Long amount,  String accountNumFirst, String accountNumSecond){
+        BankAccount accountFirst = AccountsDB.findAccount(accountNumFirst);
+        BankAccount accountSecond = AccountsDB.findAccount(accountNumSecond);
+
         if(accountFirst.getBalanceOnAccount()>=amount){
             accountFirst.moneyWithdrawal(amount);
             accountSecond.moneyReceipt(amount);
@@ -44,55 +45,46 @@ public class HolderController {
             AccountsDB.balanceUpdate(accountSecond);
         }
         else {
-            System.out.println("Недостаточно средств");
+            new MessageWindow("Недостаточно средств на счёте");
         }
     }
-    public void openAccount(){
+    public static void openAccount(AccountHolder holder){
         BankAccount bankAccount = new BankAccount((holder.getName()+" "+holder.getSurname()+" "+holder.getPatronymic()));
         (holder.bankAccounts).add(bankAccount);
         AccountsDB.addAccount(bankAccount);
 
     }
-    public void closeAccount(){
-        BankAccount account = selectAccount();
-        while (account.getBalanceOnAccount()!=0){
-            System.out.println("    Перевод денег с закрываемого счёта");
-            transferMoneyBetweenAccounts(account.getBalanceOnAccount());
+    public static void closeAccount(AccountHolder holder, String accountNumber){
+        BankAccount account = AccountsDB.findAccount(accountNumber);
+        if(account.getBalanceOnAccount()!=0){
+            new MessageWindow("ПЕРЕВЕДИТЕ ДЕНЬГИ С ЗАКРЫВАЕМОГО СЧЁТА!!");
+            return;
         }
 
         AccountsDB.removeAccount(account);
         (holder.bankAccounts).remove(account);
     }
-    public String getHistoryOfOperations(){
-        String accountNumber = selectAccount().getAccountNumber();
+    public static String getHistoryOfOperations(String accountNumber){
         return (HistoryOfOperationsDB.toString(accountNumber));
     }
-    public Long getBalanceOnAccount(){
-        BankAccount account = selectAccount();
-        return (account.getBalanceOnAccount());
+    public static String[] getListOfAccountsNumbers(String holder){
+        return AccountsDB.getListOfAccountsNumbers(holder);
     }
-    public String getInformationOnAllAccounts(){
+    public static String getInformationOnAllAccounts(AccountHolder holder){
         String informationOnAllAccounts = "";
-        ArrayList<BankAccount> bankAccounts= holder.bankAccounts;
+        ArrayList<BankAccount> bankAccounts= AccountsDB.getListOfAccounts(holder.getName()+" "+holder.getSurname()
+                +" "+holder.getPatronymic());
+        System.out.println(bankAccounts);
         for (BankAccount account:bankAccounts){
-            informationOnAllAccounts+=(account.getAccountNumber() + " Баланс: "+ account.getBalanceOnAccount() +"\n");
+            informationOnAllAccounts += (account.getAccountNumber() + "                           Баланс: "+ account.getBalanceOnAccount() +"\n");
         }
         return informationOnAllAccounts;
     }
-    private BankAccount selectAccount(){
-        ArrayList<BankAccount> bankAccounts= holder.bankAccounts;
-
-        for (int i = 0; i < bankAccounts.size(); i++) {
-            System.out.println("          Номер "+i+":"+bankAccounts.get(i).getAccountNumber());
-        }
-        int accountNumber = -1;
-        do{
-            System.out.print("          Введите номер счёта: ");
-            Scanner scanner = new Scanner(System.in);
-            accountNumber = scanner.nextInt();
-
-        }while (  (accountNumber < 0) || (accountNumber>=bankAccounts.size())  );
-
-        return bankAccounts.get(accountNumber);
+    public static int getBalanceOnAllAccounts(String accountNumber){
+        return AccountsDB.getBalanceOnAllAccounts(accountNumber);
     }
+    public static long getBalance(String accountNumber){
+        return AccountsDB.getBalance(accountNumber);
+    }
+
 }

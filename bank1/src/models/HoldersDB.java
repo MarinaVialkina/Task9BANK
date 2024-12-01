@@ -1,5 +1,7 @@
 package models;
 
+import views.MessageWindow;
+
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
@@ -16,7 +18,7 @@ public class HoldersDB {
 
     public static void addHolder(AccountHolder holder){
         if (findHolder(holder.getPassportNumberAndSeries())!=null) {
-            System.out.println("Клиент с такими данными уже есть в базе");
+            new MessageWindow("Клиент с такими данными уже есть в базе");
             return;
         }
         try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -32,28 +34,28 @@ public class HoldersDB {
 
     public static AccountHolder findHolder(int passportNumberAndSeries){
         AccountHolder accountHolder = null;
+        ArrayList<BankAccount> bankAccounts = null;
         try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
             Statement statement = connection.createStatement()) {
-
             ResultSet resultSet = statement.executeQuery(SELECT_HOLDERS_SQL);
-            //МОЖНО ПОИГРАТЬСЯ
+
             while (resultSet.next()){
                 if (resultSet.getInt("passportNumberAndSeries")==passportNumberAndSeries){
                     break;
                 }
             }
 
-            ArrayList<BankAccount> bankAccounts = (ArrayList<BankAccount>) Serializer.deserialize(resultSet.getString("bankAccounts"));
+            bankAccounts = (ArrayList<BankAccount>) Serializer.deserialize(resultSet.getString("bankAccounts"));
             accountHolder = new AccountHolder(resultSet.getString("name"),
                     resultSet.getString("surname"),resultSet.getString("patronymic"),
                     resultSet.getInt("passportNumberAndSeries"), bankAccounts);
 
-        } catch (SQLException e) {
+        } catch (SQLException | IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
-        }
-        finally {
+        } finally {
             return accountHolder;
         }
+
     }
 
 
